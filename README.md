@@ -1,6 +1,6 @@
 # Spider
 
-**TODO: Add description**
+Is a GrapgQL client for Elixir largely dependent ton HTTPoison and Poison.
 
 ## Installation
 
@@ -14,6 +14,27 @@ def deps do
   ]
 end
 ```
+
+## Usage
+
+```elixir
+query = """
+{
+  allCinemaDetails(before: "2017-10-04", after: "2010-01-01") {
+    edges {
+      node {
+        slug
+        hallName
+      }
+    }
+  }
+}
+"""
+request = %Spider.request{url:"https://etmdb.com/graphql", query: %{query: query}}
+Spider.request(request)
+{:ok, %{"allCinameDetails" => {"edges" => [...]}}}
+```
+
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
