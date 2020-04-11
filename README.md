@@ -1,6 +1,6 @@
 # Spider
 
-Is a GrapgQL client for Elixir largely dependent ton HTTPoison and Poison.
+Is a GraphQL client for Elixir largely dependent ton HTTPoison and Poison.
 
 ## Installation
 
