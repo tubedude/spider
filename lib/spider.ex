@@ -44,7 +44,7 @@ defmodule Spider do
   def request(%Spider.Request{} = proto_request) do
     request = %HTTPoison.Request{
       url: proto_request.url,
-      body: Poison.encode!(merge_query(proto_request).query),
+      body: merge_query(proto_request),
       method: :post,
       headers: process_headers(proto_request.headers),
       params: proto_request.params,
@@ -60,7 +60,10 @@ defmodule Spider do
       {:ok, %{body: body}} ->
         case Poison.decode(body) do
           {:error, :invalid, _} ->
-            {:error, body, %{code: :invalid}}
+            {:error, body}
+
+          {:error, _} ->
+            {:error, %{raw: body}}
 
           {:ok, resp} ->
             prepare_response(resp)
@@ -80,7 +83,7 @@ defmodule Spider do
     |> request()
   end
 
-  defp prepare_response(resp) do
+  defp prepare_response(resp) when is_map(resp) do
     case {Map.fetch(resp, "data"), Map.fetch(resp, "errors")} do
       {:error, :error} ->
         {:error, %{raw: resp}}
@@ -98,6 +101,9 @@ defmodule Spider do
         end
     end
   end
+  defp prepare_response(resp) do
+    {:error, %{raw: resp}}
+  end
 
   defp process_headers(headers) when is_map(headers) do
     case {Map.has_key?(headers, :"content-type"), Map.has_key?(headers, "content-type")} do
@@ -105,22 +111,19 @@ defmodule Spider do
       {_, _} -> headers
     end
   end
-
   defp process_headers(headers) when is_list(headers) do
     Keyword.merge(default_content_type(), headers)
   end
 
   defp default_content_type, do: ["content-type": "application/json"]
 
-  @spec merge_query(request :: Request.t()) :: Request.t()
+  # @spec merge_query(request :: Request.t()) :: String.t()
   defp merge_query(request) do
-    query =
       cond do
-        is_map(request.query) -> Map.merge(request.query, request.extras)
-        is_binary(request.query) -> Map.merge(%{query: request.query}, request.extras)
+        is_map(request.query) -> Poison.encode!(Map.merge(request.query, request.extras))
+        is_binary(request.query) -> request.query
+        # is_binary(request.query) -> Map.merge(%{query: request.query}, request.extras)
         true -> raise ArgumentError
       end
-
-    %{request | query: query, extras: %{}}
   end
 end
